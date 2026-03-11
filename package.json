@@ -26,5 +26,10 @@
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.1.0",
     "mongoose": "^9.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.15",
+    "hardhat": "^3.1.11",
+    "typescript": "~5.8.0"
   }
 }

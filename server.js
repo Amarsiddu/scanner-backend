@@ -13,8 +13,6 @@ import authRoutes from "./routes/auth.js";
 dotenv.config();
 
 const app = express();
-
-// Use cloud port if deployed
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
@@ -27,9 +25,7 @@ app.use(express.urlencoded({ limit: "100mb", extended: true }));
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected"))
-  .catch((err) => {
-    console.error("❌ MongoDB Error:", err);
-  });
+  .catch((err) => console.error("❌ MongoDB Error:", err));
 
 // ========================
 // Auth Routes
@@ -66,23 +62,42 @@ app.post("/presign", async (req, res) => {
       return res.status(400).json({ error: "fileName required" });
     }
 
+    // Validate extension
+    const ext = fileName.split(".").pop().toLowerCase();
+    const allowed = ["jpg", "jpeg", "png", "ply"];
+
+    if (!allowed.includes(ext)) {
+      return res.status(400).json({
+        error: "Unsupported file type"
+      });
+    }
+
+    // Organize S3 uploads
+    const key = `uploads/${Date.now()}-${fileName}`;
+
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET,
-      Key: fileName,
-      ContentType: "application/octet-stream",
+      Key: key,
+      ContentType:
+        ext === "ply"
+          ? "model/ply"
+          : ext === "png"
+          ? "image/png"
+          : "image/jpeg"
     });
 
     const signedUrl = await getSignedUrl(s3, command, {
-      expiresIn: 3600,
+      expiresIn: 3600
     });
 
-    res.json({ url: signedUrl });
+    res.json({
+      url: signedUrl,
+      key: key
+    });
 
   } catch (error) {
-
     console.error("Presign Error:", error);
     res.status(500).json({ error: "Presign failed" });
-
   }
 });
 
@@ -100,16 +115,25 @@ app.post("/upload-complete", async (req, res) => {
 
     const fileBuffer = Buffer.from(fileBufferBase64, "base64");
 
+    // Prevent tiny files
+    if (fileBuffer.length < 10000) {
+      return res.status(400).json({
+        error: "File too small"
+      });
+    }
+
+    // Hash file
     const hash = crypto
       .createHash("sha256")
       .update(fileBuffer)
       .digest("hex");
 
+    // Store on blockchain
     const txHash = await storeOnBlockchain(s3Url, hash);
 
     res.json({
       success: true,
-      txHash,
+      txHash
     });
 
   } catch (error) {
@@ -118,7 +142,7 @@ app.post("/upload-complete", async (req, res) => {
 
     res.status(500).json({
       success: false,
-      error: "Blockchain failed",
+      error: "Blockchain failed"
     });
 
   }
