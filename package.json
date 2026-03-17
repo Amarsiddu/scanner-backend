@@ -25,7 +25,9 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.1.0",
-    "mongoose": "^9.2.4"
+    "mongoose": "^9.2.4",
+    "nodemailer": "^8.0.2",
+    "twilio": "^5.13.0"
   },
   "devDependencies": {
     "@types/node": "^22.19.15",

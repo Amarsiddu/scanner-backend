@@ -9,7 +9,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 import { storeOnBlockchain } from "./blockchain.js";
 import authRoutes from "./routes/auth.js";
-
+import bookingRoutes from "./routes/bookings.js";
 dotenv.config();
 
 const app = express();
@@ -31,7 +31,7 @@ mongoose
 // Auth Routes
 // ========================
 app.use("/auth", authRoutes);
-
+app.use("/booking", bookingRoutes);
 // ========================
 // AWS S3 Setup
 // ========================
